@@ -1,14 +1,15 @@
 {
   "agent_name": "Chat Assistant Agent",
-  "agent_id": "69441b3e4fdf6ed46926f45e",
+  "agent_id": "69441ca54fdf6ed46926f465",
   "agent_purpose": "assistant",
-  "description": "Conversational AI assistant that engages in natural dialogue, answers questions, and maintains conversation context with 10-message memory",
+  "description": "Conversational AI assistant that engages in natural dialogue and supports Slack message integration. Returns JSON with conversational responses and optional Slack action metadata.",
   "response_schema": {
     "status": "string",
     "result": {
-      "response": "string",
-      "tone": "string",
-      "includes_context": "boolean"
+      "message": "string",
+      "slack_action": "null",
+      "slack_details": "null",
+      "context": "string"
     },
     "metadata": {
       "agent_name": "string",
@@ -18,28 +19,30 @@
   "example_response": {
     "status": "success",
     "result": {
-      "response": "Hello! I can help you with a variety of things, like answering questions, providing information, assisting with tasks, or just having a friendly chat. What would you like to talk about or do today?",
-      "tone": "friendly",
-      "includes_context": false
+      "message": "Of course! Please let me know the message you'd like to send to the #general channel, and I'll confirm with you before sending it to Slack.",
+      "slack_action": null,
+      "slack_details": null,
+      "context": "User asked for help sending a message to the #general Slack channel. Awaiting the message content."
     },
     "metadata": {
       "agent_name": "Chat Assistant Agent",
-      "timestamp": "2024-06-13T17:07:47Z"
+      "timestamp": "2023-11-17T09:12:56Z"
     }
   },
   "is_actual_tested": true,
   "actual_test_response": {
     "status": "success",
     "result": {
-      "response": "Hello! I can help you with a variety of things, like answering questions, providing information, assisting with tasks, or just having a friendly chat. What would you like to talk about or do today?",
-      "tone": "friendly",
-      "includes_context": false
+      "message": "Of course! Please let me know the message you'd like to send to the #general channel, and I'll confirm with you before sending it to Slack.",
+      "slack_action": null,
+      "slack_details": null,
+      "context": "User asked for help sending a message to the #general Slack channel. Awaiting the message content."
     },
     "metadata": {
       "agent_name": "Chat Assistant Agent",
-      "timestamp": "2024-06-13T17:07:47Z"
+      "timestamp": "2023-11-17T09:12:56Z"
     }
   },
-  "test_timestamp": "2025-12-18T15:18:43.039677",
+  "test_timestamp": "2025-12-18T15:24:41.201525",
   "test_passed": true
 }

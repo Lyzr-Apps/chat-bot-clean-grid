@@ -1,16 +1,23 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { FiSend, FiRefreshCw } from 'react-icons/fi'
+import { FiSend, FiRefreshCw, FiSlack, FiCheckCircle, FiX } from 'react-icons/fi'
 
-// Agent ID from orchestrator
-const AGENT_ID = '69441b3e4fdf6ed46926f45e'
+// Agent ID from orchestrator - Updated with Slack capabilities
+const AGENT_ID = '69441ca54fdf6ed46926f465'
 
 // Response schema interface based on chat_assistant_agent_response.json
+interface SlackDetails {
+  channel_name: string
+  message_content?: string
+  timestamp?: string
+}
+
 interface AgentResult {
-  response: string
-  tone: string
-  includes_context: boolean
+  message: string
+  slack_action: null | 'message_ready_to_send' | 'message_sent'
+  slack_details: SlackDetails | null
+  context: string
 }
 
 interface AgentMetadata {
@@ -39,14 +46,15 @@ interface Message {
   role: 'user' | 'assistant'
   content: string
   timestamp: Date
-  tone?: string
+  slack_action?: null | 'message_ready_to_send' | 'message_sent'
+  slack_details?: SlackDetails | null
 }
 
 const STARTER_PROMPTS = [
   'Explain quantum computing',
   'What are the latest AI trends?',
-  'Help me understand machine learning',
-  'Tell me about blockchain technology'
+  'Help me send a message to Slack',
+  'Post this to our team channel'
 ]
 
 // Typing Indicator Component
@@ -60,13 +68,110 @@ function TypingIndicator() {
   )
 }
 
+// Slack Confirmation Indicator Component
+function SlackConfirmation({ channel }: { channel: string }) {
+  const [visible, setVisible] = useState(true)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setVisible(false)
+    }, 3000)
+    return () => clearTimeout(timer)
+  }, [])
+
+  if (!visible) return null
+
+  return (
+    <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2 mt-3 animate-in fade-in slide-in-from-bottom-1">
+      <FiCheckCircle size={16} className="text-green-600 flex-shrink-0" />
+      <span>Message sent to {channel}</span>
+    </div>
+  )
+}
+
+// Slack Action Box Component
+function SlackActionBox({
+  message,
+  channel,
+  onConfirm,
+  onCancel,
+  loading
+}: {
+  message: string
+  channel: string
+  onConfirm: () => void
+  onCancel: () => void
+  loading: boolean
+}) {
+  return (
+    <div className="flex items-start gap-3 mt-3 animate-in fade-in slide-in-from-left-2">
+      <div className="flex-shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center">
+          <FiSlack size={18} className="text-blue-500" />
+        </div>
+      </div>
+
+      <div className="flex-1 bg-gray-50 border border-blue-300 rounded-lg p-4">
+        <div className="mb-3">
+          <h3 className="font-semibold text-gray-800 text-sm mb-2 flex items-center gap-2">
+            <FiSlack size={16} className="text-blue-500" />
+            Send to Slack
+          </h3>
+          <p className="text-gray-700 text-sm mb-3">
+            Message to <span className="font-semibold text-blue-600">{channel}</span>:
+          </p>
+          <div className="bg-white border border-gray-200 rounded p-3 mb-3">
+            <p className="text-sm text-gray-700 whitespace-pre-wrap">{message}</p>
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <button
+            onClick={onConfirm}
+            disabled={loading}
+            className="flex-1 px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Sending...</span>
+              </>
+            ) : (
+              <span>Confirm Send</span>
+            )}
+          </button>
+          <button
+            onClick={onCancel}
+            disabled={loading}
+            className="px-4 py-2 bg-white text-gray-700 text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // Message Bubble Component
-function MessageBubble({ message }: { message: Message }) {
+function MessageBubble({
+  message,
+  onSlackActionConfirm,
+  onSlackActionCancel,
+  slackActionLoading
+}: {
+  message: Message
+  onSlackActionConfirm?: (msgId: string) => void
+  onSlackActionCancel?: (msgId: string) => void
+  slackActionLoading?: boolean
+}) {
   const isUser = message.role === 'user'
+  const hasSlackAction = message.slack_action === 'message_ready_to_send'
+  const hasSlackConfirmation = message.slack_action === 'message_sent'
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4 animate-in fade-in slide-in-from-bottom-2`}>
-      <div className={`flex gap-3 max-w-[70%] ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
+      <div className={`flex gap-3 w-full max-w-[85%] ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
         {!isUser && (
           <div className="flex-shrink-0">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-sm font-semibold">
@@ -75,18 +180,32 @@ function MessageBubble({ message }: { message: Message }) {
           </div>
         )}
 
-        <div>
+        <div className={`flex-1 ${isUser ? 'flex justify-end' : ''}`}>
           <div className={`${
             isUser
               ? 'bg-blue-500 text-white'
               : 'bg-gray-100 text-gray-800'
-          } rounded-lg px-4 py-2.5 break-words`}>
+          } rounded-lg px-4 py-2.5 break-words inline-block`}>
             <p className="text-sm leading-relaxed">{message.content}</p>
           </div>
 
           <div className={`text-xs text-gray-400 mt-1 ${isUser ? 'text-right' : 'text-left'}`}>
             {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </div>
+
+          {hasSlackAction && message.slack_details && onSlackActionConfirm && onSlackActionCancel && (
+            <SlackActionBox
+              message={message.slack_details.message_content || message.content}
+              channel={message.slack_details.channel_name}
+              onConfirm={() => onSlackActionConfirm(message.id)}
+              onCancel={() => onSlackActionCancel(message.id)}
+              loading={slackActionLoading || false}
+            />
+          )}
+
+          {hasSlackConfirmation && message.slack_details && (
+            <SlackConfirmation channel={message.slack_details.channel_name} />
+          )}
         </div>
       </div>
     </div>
@@ -126,8 +245,10 @@ export default function ChatbotPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [slackActionLoading, setSlackActionLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [sessionId] = useState(`session-${Date.now()}`)
+  const [pendingSlackAction, setPendingSlackAction] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Auto-scroll to bottom
@@ -137,7 +258,7 @@ export default function ChatbotPage() {
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages, loading])
+  }, [messages, loading, slackActionLoading])
 
   const sendMessage = async (messageText?: string) => {
     const textToSend = messageText || input.trim()
@@ -159,13 +280,7 @@ export default function ChatbotPage() {
     setLoading(true)
 
     try {
-      // Build conversation history for context
-      const conversationHistory = messages.map(msg => ({
-        role: msg.role,
-        content: msg.content
-      }))
-
-      // Call the agent API
+      // Call the agent API with the new agent ID that supports Slack
       const response = await fetch('/api/agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -185,9 +300,10 @@ export default function ChatbotPage() {
         const assistantMessage: Message = {
           id: `msg-${Date.now()}`,
           role: 'assistant',
-          content: agentResponse.result.response,
+          content: agentResponse.result.message,
           timestamp: new Date(),
-          tone: agentResponse.result.tone
+          slack_action: agentResponse.result.slack_action,
+          slack_details: agentResponse.result.slack_details
         }
 
         setMessages(prev => [...prev, assistantMessage])
@@ -216,6 +332,83 @@ export default function ChatbotPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleSlackActionConfirm = async (messageId: string) => {
+    setPendingSlackAction(messageId)
+    setSlackActionLoading(true)
+
+    try {
+      // Find the message with the Slack action
+      const messageWithAction = messages.find(msg => msg.id === messageId)
+      if (!messageWithAction || !messageWithAction.slack_details) return
+
+      // Send confirmation to agent to proceed with Slack message
+      const response = await fetch('/api/agent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agent_id: AGENT_ID,
+          message: `Confirm: Send message to ${messageWithAction.slack_details.channel_name}`,
+          session_id: sessionId,
+          user_id: `user-${Date.now()}`
+        })
+      })
+
+      const data: APIResponse = await response.json()
+
+      if (data.success) {
+        const agentResponse = data.response
+
+        // Update the message with confirmed status
+        setMessages(prev =>
+          prev.map(msg =>
+            msg.id === messageId
+              ? {
+                  ...msg,
+                  slack_action: 'message_sent' as const,
+                  slack_details: agentResponse.result.slack_details || msg.slack_details
+                }
+              : msg
+          )
+        )
+
+        // Add confirmation message from agent
+        const confirmMessage: Message = {
+          id: `msg-${Date.now()}`,
+          role: 'assistant',
+          content: agentResponse.result.message,
+          timestamp: new Date(),
+          slack_action: agentResponse.result.slack_action,
+          slack_details: agentResponse.result.slack_details
+        }
+
+        setMessages(prev => [...prev, confirmMessage])
+      } else {
+        setError('Failed to send Slack message. Please try again.')
+      }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Network error'
+      setError(`Error sending to Slack: ${errorMsg}`)
+    } finally {
+      setSlackActionLoading(false)
+      setPendingSlackAction(null)
+    }
+  }
+
+  const handleSlackActionCancel = (messageId: string) => {
+    // Simply remove the Slack action from the message
+    setMessages(prev =>
+      prev.map(msg =>
+        msg.id === messageId
+          ? {
+              ...msg,
+              slack_action: null,
+              slack_details: null
+            }
+          : msg
+      )
+    )
   }
 
   const handleSend = (e: React.FormEvent<HTMLFormElement>) => {
@@ -268,7 +461,13 @@ export default function ChatbotPage() {
           ) : (
             <div className="space-y-4">
               {messages.map((msg) => (
-                <MessageBubble key={msg.id} message={msg} />
+                <MessageBubble
+                  key={msg.id}
+                  message={msg}
+                  onSlackActionConfirm={handleSlackActionConfirm}
+                  onSlackActionCancel={handleSlackActionCancel}
+                  slackActionLoading={slackActionLoading && pendingSlackAction === msg.id}
+                />
               ))}
               {loading && (
                 <div className="flex justify-start">

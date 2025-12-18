@@ -1,22 +1,23 @@
 {
   "agent_name": "Chat Assistant Agent",
-  "agent_id": "69441b3e4fdf6ed46926f45e",
-  "test_message": "Hello! What can you help me with today?",
-  "expected_purpose": "assistant",
-  "timestamp": "2025-12-18T15:18:43.038842",
+  "agent_id": "69441ca54fdf6ed46926f465",
+  "test_message": "Can you help me send a message to our #general channel on Slack?",
+  "expected_purpose": "conversational",
+  "timestamp": "2025-12-18T15:24:41.200777",
   "is_valid_json": true,
   "validation_errors": [],
   "actual_response": {
     "status": "success",
     "result": {
-      "response": "Hello! I can help you with a variety of things, like answering questions, providing information, assisting with tasks, or just having a friendly chat. What would you like to talk about or do today?",
-      "tone": "friendly",
-      "includes_context": false
+      "message": "Of course! Please let me know the message you'd like to send to the #general channel, and I'll confirm with you before sending it to Slack.",
+      "slack_action": null,
+      "slack_details": null,
+      "context": "User asked for help sending a message to the #general Slack channel. Awaiting the message content."
     },
     "metadata": {
       "agent_name": "Chat Assistant Agent",
-      "timestamp": "2024-06-13T17:07:47Z"
+      "timestamp": "2023-11-17T09:12:56Z"
     }
   },
-  "raw_response": "{\n  \"status\": \"success\",\n  \"result\": {\n    \"response\": \"Hello! I can help you with a variety of things, like answering questions, providing information, assisting with tasks, or just having a friendly chat. What would you like to talk about or do today?\",\n    \"tone\": \"friendly\",\n    \"includes_context\": false\n  },\n  \"metadata\": {\n    \"agent_name\": \"Chat Assistant Agent\",\n    \"timestamp\": \"2024-06-13T17:07:47Z\"\n  }\n}"
+  "raw_response": "{\n  \"status\": \"success\",\n  \"result\": {\n    \"message\": \"Of course! Please let me know the message you'd like to send to the #general channel, and I'll confirm with you before sending it to Slack.\",\n    \"slack_action\": null,\n    \"slack_details\": null,\n    \"context\": \"User asked for help sending a message to the #general Slack channel. Awaiting the message content.\"\n  },\n  \"metadata\": {\n    \"agent_name\": \"Chat Assistant Agent\",\n    \"timestamp\": \"2023-11-17T09:12:56Z\"\n  }\n}"
 }
