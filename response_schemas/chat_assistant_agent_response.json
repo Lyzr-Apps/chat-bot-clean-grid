@@ -1,0 +1,45 @@
+{
+  "agent_name": "Chat Assistant Agent",
+  "agent_id": "69441b3e4fdf6ed46926f45e",
+  "agent_purpose": "assistant",
+  "description": "Conversational AI assistant that engages in natural dialogue, answers questions, and maintains conversation context with 10-message memory",
+  "response_schema": {
+    "status": "string",
+    "result": {
+      "response": "string",
+      "tone": "string",
+      "includes_context": "boolean"
+    },
+    "metadata": {
+      "agent_name": "string",
+      "timestamp": "string"
+    }
+  },
+  "example_response": {
+    "status": "success",
+    "result": {
+      "response": "Hello! I can help you with a variety of things, like answering questions, providing information, assisting with tasks, or just having a friendly chat. What would you like to talk about or do today?",
+      "tone": "friendly",
+      "includes_context": false
+    },
+    "metadata": {
+      "agent_name": "Chat Assistant Agent",
+      "timestamp": "2024-06-13T17:07:47Z"
+    }
+  },
+  "is_actual_tested": true,
+  "actual_test_response": {
+    "status": "success",
+    "result": {
+      "response": "Hello! I can help you with a variety of things, like answering questions, providing information, assisting with tasks, or just having a friendly chat. What would you like to talk about or do today?",
+      "tone": "friendly",
+      "includes_context": false
+    },
+    "metadata": {
+      "agent_name": "Chat Assistant Agent",
+      "timestamp": "2024-06-13T17:07:47Z"
+    }
+  },
+  "test_timestamp": "2025-12-18T15:18:43.039677",
+  "test_passed": true
+}
